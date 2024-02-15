@@ -1,133 +1,43 @@
-# Madara App Chain Template
+# Madara Escrow
 
-A fresh [Madara](https://github.com/keep-starknet-strange/madara) app chain, ready for hacking 🚀
+A modified [Madara](https://github.com/keep-starknet-strange/madara) app chain, for escrows (locked payments)
 
-All bugs, suggestions, and feature requests should be made upstream in the [Madara](https://github.com/keep-starknet-strange/madara) repository.
+This Madara App Chain contains a pallet which allows users to create [secure escrows](./crates/pallets/escrow/) that keep funds locked in a merchant's account until the off-chain goods/services are confirmed to be received. Each payment/escrow gets assigned its own *judge* that can help resolve any disputes between the two parties.
+
+## Use case
+
+This Madara App Chain focuses on use cases where an intermediate step is required before the recipient of a payment has access to money, such as payment for off-chain products and services, for supply chain management, for industry banking, for regulated markets, cross-border payments, among others.
 
 ## Getting Started
 
-Depending on your operating system and Rust version, there might be additional packages required to compile this template.
-Check the [Install](https://docs.substrate.io/install/) instructions for your platform for the most common dependencies.
-Alternatively, you can use one of the [alternative installation](#alternatives-installations) options.
+To build and user this app chain, follow the instructions on [Madara docs](keep-starknet-strange/madara-app-chain-template).
 
-### Build
+_This escrow pallet needs other helper pallets (adapted from other projects), available in the same [pallets folder](./crates/pallets/)_
 
-Use the following command to build the node without launching it:
+This Escrow Chain use the following:
 
-```sh
-cargo build --release
-```
+### Terminology
+- **Created**: A payment has been created and the amount arrived to its destination but it's locked.
+- **NeedsReview**: The payment has bee disputed and is awaiting settlement by a judge.
+- **IncentivePercentage**: A small share of the payment amount is held in escrow until a payment is completed/cancelled. The Incentive Percentage represents this value.
+- **Resolver Account**: A resolver account is assigned to every payment created, this account has the privilege to cancel/release a payment that has been disputed.
+- **Remark**: The pallet allows to create payments by optionally providing some extra(limited) amount of bytes, this is referred to as Remark. This can be used by a marketplace to separate/tag payments.
+- **CancelBufferBlockLength**: This is the time window where the recipient can dispute a cancellation request from the payment creator.
 
-### Embedded Docs
+### Actions
+- **pay**: Create an payment for the given currencyid/amount
+- **pay_with_remark**: Create a payment with a remark, can be used to tag payments
+- **release**: Release the payment amount to recipent
+- **cancel**: Allows the recipient to cancel the payment and release the payment amount to creator
+- **resolve_release_payment**: Allows assigned judge to release a payment
+- **resolve_cancel_payment**:  Allows assigned judge to cancel a payment
+- **request_refund**: Allows the creator of the payment to trigger cancel with a buffer time.
+- **claim_refund**: Allows the creator to claim payment refund after buffer time
+- **dispute_refund**: Allows the recipient to dispute the payment request of sender
+- **request_payment**: Create a payment that can be completed by the sender using the `accept_and_pay` extrinsic.
+- **accept_and_pay**: Allows the sender to fulfill a payment request created by a recipient
 
-After you build the project, you can use the following command to explore its parameters and subcommands:
+### Types
+- **PaymentDetail** struct: Stores information about the payment/escrow. A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds and can be released once an agreed upon condition has reached between the payment creator and recipient. The payment lifecycle is tracked using the state field.
 
-```sh
-./target/release/app-chain-node -h
-```
-
-You can generate and view the [Rust Docs](https://doc.rust-lang.org/cargo/commands/cargo-doc.html) for this template with this command:
-
-```sh
-cargo +nightly doc --open
-```
-
-### Single-Node Development Chain
-
-Set up the chain with the genesis config. More about defining the genesis state is mentioned below.
-
-```sh
-./target/release/app-chain-node setup --chain dev --from-local ./configs
-```
-
-The following command starts a single-node development chain.
-
-```sh
-./target/release/app-chain-node --dev
-```
-
-You can specify the folder where you want to store the genesis state as follows
-
-```sh
-./target/release/app-chain-node setup --chain dev --from-local ./configs --base-path=<path>
-```
-
-If you used a custom folder to store the genesis state, you need to specify it when running
-
-```sh
-./target/release/app-chain-node --base-path=<path>
-```
-
-Please note, Madara overrides the default `dev` flag in substrate to meet its requirements. The following flags are automatically enabled with the `--dev` argument:
-
-`--chain=dev`, `--force-authoring`, `--alice`, `--tmp`, `--rpc-external`, `--rpc-methods=unsafe`
-
-To store the chain state in the same folder as the genesis state, run the following command. You cannot combine the `base-path` command
-with `--dev` as `--dev` enforces `--tmp` which will store the db at a temporary folder. You can, however, manually specify all flags that
-the dev flag adds automatically. Keep in mind, the path must be the same as the one you used in the setup command.
-
-```sh
-./target/release/app-chain-node --base-path <path>
-```
-
-To start the development chain with detailed logging, run the following command:
-
-```sh
-RUST_BACKTRACE=1 ./target/release/app-chain-node -ldebug --dev
-```
-
-### Connect with Polkadot-JS Apps Front-End
-
-After you start the app chain locally, you can interact with it using the hosted version of the [Polkadot/Substrate Portal](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944) front-end by connecting to the local node endpoint.
-A hosted version is also available on [IPFS (redirect) here](https://dotapps.io/) or [IPNS (direct) here](ipns://dotapps.io/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer).
-You can also find the source code and instructions for hosting your own instance on the [polkadot-js/apps](https://github.com/polkadot-js/apps) repository.
-
-### Multi-Node Local Testnet
-
-If you want to see the multi-node consensus algorithm in action, see [Simulate a network](https://docs.substrate.io/tutorials/get-started/simulate-network/).
-
-## Template Structure
-
-The app chain template gives you complete flexibility to modify exiting features of Madara and add new features as well.
-
-### Existing Pallets
-
-Madara comes with only one pallet - `pallet_starknet`. This pallet allows app chains to execute Cairo contracts and have 100% RPC compatabiltiy with Starknet mainnet. This means all Cairo tooling should work out of the box with the app chain. At the same time, the pallet also allows the app chain to fine tune specific parameters to meet their own needs.
-
-- `DisableTransactionFee`: If true, calculate and store the Starknet state commitments
-- `DisableNonceValidation`: If true, check and increment nonce after a transaction
-- `InvokeTxMaxNSteps`: Maximum number of Cairo steps for an invoke transaction
-- `ValidateMaxNSteps`: Maximum number of Cairo steps when validating a transaction
-- `MaxRecursionDepth`: Maximum recursion depth for transactions
-- `ChainId`: The chain id of the app chain
-
-All these options can be configured inside `crates/runtime/src/pallets.rs`
-
-### Genesis
-
-The genesis state of the app chain is defined via a JSON file. It lives inside the `config` folder but can also be fetch from a url. You can read in more detail about how to setup the config from these two docs in the Madara repo.
-- [Genesis](https://github.com/keep-starknet-strange/madara/blob/main/docs/genesis.md)
-- [Configs](https://github.com/d-roak/madara/blob/feat/configs-index/docs/configs.md)
-
-### New Pallets
-
-Adding a new pallet is the same as adding a pallet in any substrate based chain. An an example, `pallet-template` has been added on this template. You can read more about it [here](https://docs.substrate.io/tutorials/build-application-logic/add-a-pallet/).
-
-### Runtime configuration
-
-Similar to new pallets, runtime configurations can be just like they're done in Substrate. You can edit all the available parameters inside `crates/runtime/src/config.rs`.
-
-For example, to change the block time, you can edit the `MILLISECS_PER_BLOCK` variable.
-
-## Alternatives Installations
-
-Instead of installing dependencies and building this source directly, consider the following alternatives.
-
-### Nix
-
-Install [nix](https://nixos.org/), and optionally [direnv](https://github.com/direnv/direnv) and [lorri](https://github.com/nix-community/lorri) for a fully plug-and-play experience for setting up the development environment.
-To get all the correct dependencies, activate direnv `direnv allow` and lorri `lorri shell`.
-
-### Docker
-
-Please use the [Madara Dockerfile](https://github.com/keep-starknet-strange/madara/blob/main/Dockerfile) as a reference to build the Docker container with your App Chain node as a binary.
+- **PaymentState** enum: Tracks the possible states that a payment can be in. When a payment is 'completed' or 'cancelled' it is removed from storage and hence not tracked by a state.
