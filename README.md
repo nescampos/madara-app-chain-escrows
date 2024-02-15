@@ -10,7 +10,7 @@ This Madara App Chain focuses on use cases where an intermediate step is require
 
 ## Getting Started
 
-To build and user this app chain, follow the instructions on [Madara docs](keep-starknet-strange/madara-app-chain-template).
+To build and user this app chain, follow the instructions on [Madara docs](https://github.com/keep-starknet-strange/madara-app-chain-template).
 
 _This escrow pallet needs other helper pallets (adapted from other projects), available in the same [pallets folder](./crates/pallets/)_
 
