@@ -1,0 +1,48 @@
+[package]
+authors = ["Nestor Campos"]
+edition = '2024'
+name = "madara-escrows"
+version = "0.1.0"
+license = "Apache-2.0"
+homepage = "https://github.com/nescampos/madara-app-chain-escrows"
+repository = "https://github.com/nescampos/madara-app-chain-escrows"
+description = "Allows users to create escrow payment on Madara App Chain"
+readme = "README.md"
+
+[dependencies]
+parity-scale-codec = { workspace = true }
+log = { workspace = true }
+scale-info = { workspace = true }
+
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+orml-traits = {path = "../traits", version = "0.7.0", default-features = false }
+
+[dev-dependencies]
+serde = "1.0.136"
+
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+
+orml-tokens = { path = "../tokens" }
+
+[features]
+default = [ 'std' ]
+std = [
+	'frame-support/std',
+	'frame-system/std',
+	'log/std',
+	'orml-traits/std',
+	'parity-scale-codec/std',
+	'scale-info/std',
+	'sp-runtime/std',
+	'sp-std/std',
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"sp-runtime/try-runtime",
+]

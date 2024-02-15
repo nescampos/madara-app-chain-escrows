@@ -3,6 +3,10 @@ members = [
   "crates/node",
   "crates/runtime",
   "crates/pallets/template",
+  "crates/pallets/escrow",
+  "crates/pallets/tokens",
+  "crates/pallets/traits",
+  "crates/pallets/utilities",
 ]
 
 [profile.release]
